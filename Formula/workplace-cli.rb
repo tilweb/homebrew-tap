@@ -18,7 +18,13 @@ class WorkplaceCli < Formula
     system python, "-m", "venv", libexec
     pip = libexec/"bin/pip"
     system pip, "install", "--upgrade", "pip", "wheel"
-    system pip, "install", cached_download
+
+    # Brew's cached_download hat keinen .whl-Suffix, pip akzeptiert das nicht.
+    # Copy mit korrekter Extension in den Build-Path, dann pip install.
+    wheel_path = buildpath/"workplace_cli-#{version}-py3-none-any.whl"
+    cp cached_download, wheel_path
+    system pip, "install", wheel_path
+
     # Symlinks ins Brew-bin/. Console-Scripts aus pyproject:
     #   workplace (primary), vibe (legacy migration alias), vibe-acp
     %w[workplace vibe vibe-acp].each do |script|
