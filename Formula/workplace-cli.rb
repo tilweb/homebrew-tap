@@ -9,7 +9,6 @@ class WorkplaceCli < Formula
   version "1.0.0"
 
   depends_on "python@3.12"
-  depends_on "rust" => :build  # für ggf. von Deps benötigte Rust-Crates (tree-sitter, etc.)
 
   # NOTE: pragmatischer Install: das pre-built Wheel wird direkt mit pip in
   # eine venv installiert, pip resolved alle ~150 Deps selbst. Vorteil: kompakte
