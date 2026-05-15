@@ -7,6 +7,7 @@ class WorkplaceCli < Formula
   version "1.0.0"
 
   depends_on "python@3.12"
+  depends_on "rust" => :build  # rpds-py wird from-source gebaut (siehe install)
 
   # NOTE: pragmatischer Install ohne `Language::Python::Virtualenv`-Mixin.
   # Vanilla python -m venv + pip install resolved alle ~150 Deps selbst.
@@ -23,7 +24,10 @@ class WorkplaceCli < Formula
     # Copy mit korrekter Extension in den Build-Path, dann pip install.
     wheel_path = buildpath/"workplace_cli-#{version}-py3-none-any.whl"
     cp cached_download, wheel_path
-    system pip, "install", wheel_path
+    # rpds-py: aus PyPI als wheel hat zu schmale Mach-O-Header → Brew's
+    # post-install dylib-Relocation scheitert. Loesung: rpds-py from-source
+    # bauen (braucht Rust, siehe depends_on). Andere Deps duerfen wheels nutzen.
+    system pip, "install", "--no-binary=rpds-py", wheel_path
 
     # Symlinks ins Brew-bin/. Console-Scripts aus pyproject:
     #   workplace (primary), vibe (legacy migration alias), vibe-acp
@@ -38,13 +42,4 @@ class WorkplaceCli < Formula
     assert_match(/1\.0\.0/, output)
   end
 
-  # Skip Brew's post-install dylib-Relocation.
-  # Begruendung: einige Python-Sub-Dependencies (z.B. rpds-py) liefern .so-
-  # Files mit zu schmalem Mach-O-Header, sodass Brew's fix_dynamic_linkage
-  # mit "Updated load commands do not fit in the header" abbricht.
-  # Da alles in libexec/ unter einer venv liegt, sind die @rpath-Referenzen
-  # selbst-konsistent — wir brauchen die Relocation nicht.
-  def fix_dynamic_linkage
-    # no-op
-  end
 end
