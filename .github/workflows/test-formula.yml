@@ -1,0 +1,34 @@
+name: Test Formula
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "Formula/**"
+      - ".github/workflows/test-formula.yml"
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+  # Auto-trigger when workplace-cli releases new version
+  repository_dispatch:
+    types: [workplace-cli-released]
+
+jobs:
+  test-install:
+    name: brew install on clean macOS
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Brew tap (this repo, local)
+        run: |
+          brew tap tilweb/tap "$(pwd)"
+      - name: Install workplace-cli
+        run: brew install --verbose workplace-cli
+      - name: Test workplace --version
+        run: |
+          workplace --version
+          workplace --version | grep -F "1.0.0"
+      - name: brew test (Formula's own test block)
+        run: brew test workplace-cli
+      - name: brew audit
+        run: brew audit --strict --formula workplace-cli || echo "::warning::brew audit reported issues (non-blocking for now)"
