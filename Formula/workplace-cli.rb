@@ -37,4 +37,14 @@ class WorkplaceCli < Formula
     output = shell_output("#{bin}/workplace --version")
     assert_match(/1\.0\.0/, output)
   end
+
+  # Skip Brew's post-install dylib-Relocation.
+  # Begruendung: einige Python-Sub-Dependencies (z.B. rpds-py) liefern .so-
+  # Files mit zu schmalem Mach-O-Header, sodass Brew's fix_dynamic_linkage
+  # mit "Updated load commands do not fit in the header" abbricht.
+  # Da alles in libexec/ unter einer venv liegt, sind die @rpath-Referenzen
+  # selbst-konsistent — wir brauchen die Relocation nicht.
+  def fix_dynamic_linkage
+    # no-op
+  end
 end
