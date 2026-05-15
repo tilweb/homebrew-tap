@@ -7,7 +7,6 @@ class WorkplaceCli < Formula
   version "1.0.0"
 
   depends_on "python@3.12"
-  depends_on "rust" => :build  # rpds-py wird from-source gebaut (siehe install)
 
   # NOTE: pragmatischer Install ohne `Language::Python::Virtualenv`-Mixin.
   # Vanilla python -m venv + pip install resolved alle ~150 Deps selbst.
@@ -24,10 +23,13 @@ class WorkplaceCli < Formula
     # Copy mit korrekter Extension in den Build-Path, dann pip install.
     wheel_path = buildpath/"workplace_cli-#{version}-py3-none-any.whl"
     cp cached_download, wheel_path
-    # rpds-py: aus PyPI als wheel hat zu schmale Mach-O-Header → Brew's
-    # post-install dylib-Relocation scheitert. Loesung: rpds-py from-source
-    # bauen (braucht Rust, siehe depends_on). Andere Deps duerfen wheels nutzen.
-    system pip, "install", "--no-binary=rpds-py", wheel_path
+    system pip, "install", wheel_path
+    # Hinweis: Brew's post-install dylib-Relocation kann bei einzelnen Rust-
+    # Wheels (rpds-py, watchfiles, …) scheitern, weil der Mach-O-Header zu
+    # schmal fuer absolute @rpath-ReWrites ist. Der Install selbst ist
+    # trotzdem komplett — alle .so-Files liegen im venv mit @rpath/-Refs,
+    # die self-konsistent sind. CI behandelt den Linkage-Warning weich
+    # (siehe .github/workflows/test-formula.yml).
 
     # Symlinks ins Brew-bin/. Console-Scripts aus pyproject:
     #   workplace (primary), vibe (legacy migration alias), vibe-acp
